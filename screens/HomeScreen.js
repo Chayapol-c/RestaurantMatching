@@ -100,13 +100,10 @@ const HomeScreen = () => {
           />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Modal")}>
-          {/* <Image
-            style={tw`h-14 w-14`}
-            source={{}} /> */}
-          <Text>123</Text>
+        <Ionicons name="ios-people" size={40} color="#FF5864" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Chat")}>
-          <Ionicons name='chatbubbles-sharp' size={30} color="#FF5864" />
+          <Ionicons name='restaurant' size={30} color="#FF5864" />
         </TouchableOpacity>
       </View>
       <View style={tw`flex-1 -mt-6`}>
