@@ -10,10 +10,11 @@ import { collection, doc, getDoc, getDocs, onSnapshot, query, setDoc, where } fr
 import { db } from '../firebase';
 
 
+
 const HomeScreen = () => {
   const navigation = useNavigation()
   const { user, logout } = useAuth()
-  const [profiles, setProfiles] = useState([])
+  const [restaurants, setRestaurants] = useState([])
   const swipeRef = useRef(null)
 
   useLayoutEffect(
@@ -27,10 +28,9 @@ const HomeScreen = () => {
 
   useEffect(() => {
     let unsub;
-    const fetchCards = async () => {
+    const fetchRestaurants = async () => {
       const passes = await getDocs(collection(db, 'users', user.uid, 'passes'))
         .then(snapshot => snapshot.docs.map(doc => doc.id))
-
       const swipes = await getDocs(collection(db, 'users', user.uid, 'swipes'))
         .then(snapshot => snapshot.docs.map(doc => doc.id))
 
@@ -39,55 +39,36 @@ const HomeScreen = () => {
 
       unsub = onSnapshot(
         query(
-          collection(db, 'users'),
+          collection(db, 'restaurants'),
           where('id', 'not-in', [...passedUserIds, ...swipedUserIds])
         ),
         snapshot => {
-          setProfiles(
-            snapshot.docs.filter(doc => doc.id !== user.uid).map(doc => ({
+          setRestaurants(
+            snapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data(),
-            }))
+            })
+            )
           )
         })
     }
-    fetchCards()
+    fetchRestaurants()
     return unsub
-  }, [db]);
-
+  }, [db])
+  console.log("res", restaurants)
   const swipeLeft = (cardIndex) => {
-    if (!profiles[cardIndex]) return
-
-    const userSwiped = profiles[cardIndex]
-    console.log(`You swiped PASS on ${userSwiped.displayName}`)
-
-    setDoc(doc(db, "users", user.uid, 'passes', userSwiped.id), userSwiped)
+    if (!restaurants[cardIndex]) return
+    const restaurantSwiped = restaurants[cardIndex]
+    console.log(`You swiped PASS on ${restaurantSwiped.name}`)
+    setDoc(doc(db, "users", user.uid, 'passes', restaurantSwiped.id), restaurantSwiped)
   }
 
   const swipeRight = async (cardIndex) => {
-    if (!profiles[cardIndex]) return
-
-    const userSwiped = profiles[cardIndex]
-    const loggedInProfiles = await (await getDoc(db, 'users', user.uid)).data()
-
-    // Check if the user swiped on you 
-    getDoc(doc(db, 'users', userSwiped.id, 'swipes', user.uid)).then(documentSnapshot => {
-      if (documentSnapshot.exists()) {
-        // user has matched with you before you matched with them
-        // Create a MATCH
-        console.log(`You MATCHED with ${userSwiped.displayName}`)
-        setDoc(doc(db, 'users', user.uid, 'swipes', userSwiped.id), userSwiped)
-
-
-
-      } else {
-        // user has swiped as first interaction between the two or didn't get swiped on
-        console.log(`You swiped on ${userSwiped.displayName} (${userSwiped.occupation})`)
-        setDoc(doc(db, "users", user.uid, 'swipes', userSwiped.id), userSwiped)
-
-      }
-    })
-
+    if (!restaurants[cardIndex]) return
+    const restaurantSwiped = restaurants[cardIndex]
+    // user has swiped as first interaction between the two or didn't get swiped on
+    console.log(`You swiped on ${restaurantSwiped.name} (${restaurantSwiped.categories})`)
+    setDoc(doc(db, "users", user.uid, 'swipes', restaurantSwiped.id), restaurantSwiped)
   }
 
   return (
@@ -100,7 +81,7 @@ const HomeScreen = () => {
           />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Modal")}>
-        <Ionicons name="ios-people" size={40} color="#FF5864" />
+          <Ionicons name="ios-people" size={40} color="#FF5864" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Chat")}>
           <Ionicons name='restaurant' size={30} color="#FF5864" />
@@ -110,18 +91,16 @@ const HomeScreen = () => {
         <Swiper
           ref={swipeRef}
           containerStyle={{ backgroundColor: "transparent" }}
-          cards={profiles}
+          cards={restaurants}
           stackSize={5}
           cardIndex={0}
           animateCardOpacity
           verticalSwipe={false}
           onSwipedLeft={(cardIndex) => {
             swipeLeft(cardIndex)
-            console.log("Swipe Pass")
           }}
           onSwipedRight={(cardIndex) => {
             swipeRight(cardIndex)
-            console.log("Swipe MATCH")
           }}
           backgroundColor={"#4FD0E9"}
           overlayLabels={{
@@ -153,10 +132,10 @@ const HomeScreen = () => {
                 style={tw`absolute bottom-0 bg-white w-full flex-row justify-between items-center h-20 px-6 py-2 rounded-b-xl shadow-xl`}>
                 <View>
                   <Text style={tw`text-xl font-bold`}>
-                    {card.displayName}
+                    {card.name}
                   </Text>
                   <Text>
-                    {card.occupation}
+                    {card.categories}
                   </Text>
                 </View>
                 <Text style={tw`text-2xl font-bold`}>

@@ -5,7 +5,7 @@ import useAuth from '../hooks/useAuth'
 import tw from "twrnc";
 
 const LoginScreen = () => {
-  const { signInWithGoogle, loading } = useAuth()
+  const { signInWithGoogle } = useAuth()
   const navigation = useNavigation()
 
   useLayoutEffect(() => {
